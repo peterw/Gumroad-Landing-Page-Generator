@@ -12,6 +12,8 @@ You have a recent version of Python (3.7 or newer) installed.
 You have a Vercel account and a Vercel API token.
 You have OpenAI API access and an OpenAI API key.
 You have installed the required Python packages:
+
+login with the Vercel CLI 
 ```
 openai, beautifulsoup4, requests, python-dotenv, vercel
 ```
