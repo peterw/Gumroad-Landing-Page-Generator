@@ -1,41 +1,39 @@
-from dotenv import load_dotenv
-import os 
+import json
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
 import openai
 import requests
 from bs4 import BeautifulSoup
-from pathlib import Path
-import tempfile
-import json
-import requests
-import tempfile
-from pathlib import Path
-import json
-import tempfile
-from pathlib import Path
-import subprocess
-from langchain.vectorstores import DeepLake
+from dotenv import load_dotenv
 
 # Load environment variables from the .env file
 load_dotenv()
 
 # Get Vercel and OpenAI API keys from environment variables
-VERCEL_TOKEN = os.environ.get('VERCEL_TOKEN')
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+VERCEL_TOKEN = os.environ.get("VERCEL_TOKEN")
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 # Set the desired Vercel website name
-vercel_website_name = 'pwangszn'
+vercel_website_name = "pesmasterplus"
+
 
 def scrape_gumroad_data(url):
     # Send an HTTP request to the provided URL
     response = requests.get(url)
     # Parse the response HTML using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, "html.parser")
 
     # Extract relevant data using CSS selectors (modify based on actual data)
-    rich_text_elements = soup.select('.rich-text')
-    all_elements = " ".join([element.get_text(strip=True) for element in rich_text_elements])
+    rich_text_elements = soup.select(".rich-text")
+    all_elements = " ".join(
+        [element.get_text(strip=True) for element in rich_text_elements]
+    )
 
     return all_elements
+
 
 def deploy_to_vercel(html_content: str, project_name: str, vercel_token: str):
     # Create a temporary directory
@@ -52,7 +50,7 @@ def deploy_to_vercel(html_content: str, project_name: str, vercel_token: str):
         vercel_config = {
             "name": project_name,
             "version": 2,
-            "builds": [{"src": "index.html", "use": "@vercel/static"}]
+            "builds": [{"src": "index.html", "use": "@vercel/static"}],
         }
 
         with open(project_dir / "vercel.json", "w") as f:
@@ -60,7 +58,7 @@ def deploy_to_vercel(html_content: str, project_name: str, vercel_token: str):
 
         # Deploy to Vercel using the CLI
         cmd = ["vercel", "--token", vercel_token, "-y", "--prod"]
-        
+
         result = subprocess.run(cmd, cwd=project_dir, capture_output=True, text=True)
 
         if result.returncode == 0:
@@ -70,26 +68,31 @@ def deploy_to_vercel(html_content: str, project_name: str, vercel_token: str):
             print("Deployment failed:")
             print(result.stderr)
 
+
 def generate_website(gumroad_data):
     # Construct the prompt for the GPT model
-    prompt = f"Generate an HTML that is colorful and well designed. Use gradient where it is reasonable. Make the website mobile friendly. Include the following text: {gumroad_data}"
+    prompt = f"Generate an HTML that is colorful and well designed. Use gradient where it is reasonable. Make the website mobile friendly and SEO optimized. Include the following text: {gumroad_data}"  # noqa: E501
 
     # Call the OpenAI API for chat completion
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a senior frontend designer. I need you to write the frontend code."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a senior frontend designer. I need you to write the frontend code.",  # noqa: E501
+            },
+            {"role": "user", "content": prompt},
         ],
         max_tokens=1200,
         n=1,
         stop=None,
         temperature=0.7,
     )
-    
+
     # Extract the generated HTML from the response
-    reply = response['choices'][0]['message']['content']
+    reply = response["choices"][0]["message"]["content"]
     return reply
+
 
 def main(project_name: str, vercel_token: str):
     # Read the HTML file
@@ -97,7 +100,7 @@ def main(project_name: str, vercel_token: str):
 
     # Scrape the data from the Gumroad website
     scraped_data = scrape_gumroad_data(gumroad_site)
-    print('\nGenerating the site for you now ser 🫡 \n')
+    print("\nGenerating the site for you now ser 🫡 \n")
 
     # Generate the HTML content using the GPT model
     html_content = generate_website(scraped_data)
@@ -106,6 +109,6 @@ def main(project_name: str, vercel_token: str):
     deploy_to_vercel(html_content, project_name, vercel_token)
 
 
-# Run the main function with the provided website name and Vercel token 
-main(vercel_website_name, VERCEL_TOKEN)
-
+# Run the main function with the provided website name and Vercel token
+if __name__ == "__main__":
+    main(vercel_website_name, str(VERCEL_TOKEN))
