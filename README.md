@@ -35,3 +35,7 @@ python gumroad.py
 ```
 The script will prompt you to enter a Gumroad site URL. After providing the URL, it will scrape the data, generate an HTML page, and deploy it to Vercel.
 
+
+## Sponsors
+
+✨ Find profitable ideas faster: [Exploding Insights](https://explodinginsights.com/)
